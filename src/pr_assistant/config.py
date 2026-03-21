@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     app_port: int = Field(default=8000, ge=1, le=65535)
     log_level: Literal["debug", "info", "warning", "error", "critical"] = Field(default="info")
     github_webhook_secret: str = Field(default="")
+    github_app_id: int = Field(default=0)
+    github_private_key_path: str = Field(default="")
     ai_provider: Literal["groq"] = Field(default="groq")
     ai_model: str = Field(default="")
     ai_timeout_seconds: float = Field(default=30.0, gt=0)

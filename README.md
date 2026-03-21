@@ -61,6 +61,8 @@ APP_HOST=0.0.0.0
 APP_PORT=8000
 LOG_LEVEL=info
 GITHUB_WEBHOOK_SECRET=your-webhook-secret
+GITHUB_APP_ID=your-github-app-id
+GITHUB_PRIVATE_KEY_PATH=/absolute/path/to/your/signalpr.private-key.pem
 AI_PROVIDER=groq
 AI_MODEL=openai/gpt-oss-120b
 AI_TIMEOUT_SECONDS=30
@@ -121,3 +123,4 @@ Cleanup items:
 - `.env` is ignored by git. Keep secrets there.
 - `.env.example` is the committed template.
 - Groq is the current AI provider for both development and production paths.
+- GitHub API access now uses GitHub App installation tokens, not a static personal token.

@@ -1,16 +1,18 @@
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI, Request
 
 from pr_assistant.config import get_settings, validate_settings
 from pr_assistant.github_webhooks import parse_pull_request_webhook
+from pr_assistant.review_pipeline import fetch_pr_data_for_event, log_classification_examples
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    validate_settings()
+    settings = validate_settings()
+    logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
     yield
 
 
@@ -38,7 +40,6 @@ async def healthcheck() -> dict[str, str]:
 @app.post("/webhooks/github")
 async def github_webhook(request: Request) -> dict:
     action, event_context = await parse_pull_request_webhook(request)
-
     if event_context is None:
         return {
             "status": "ignored",
@@ -46,6 +47,9 @@ async def github_webhook(request: Request) -> dict:
             "action": action,
             "reason": "unsupported pull_request action",
         }
+
+    pr_data = fetch_pr_data_for_event(event_context)
+    log_classification_examples(pr_data)
 
     return {
         "status": "accepted",

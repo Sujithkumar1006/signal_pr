@@ -13,6 +13,7 @@ SUPPORTED_PULL_REQUEST_ACTIONS = {"opened", "reopened", "synchronize"}
 @dataclass(frozen=True)
 class PullRequestEventContext:
     action: str
+    installation_id: int
     repository_full_name: str
     repository_owner: str
     repository_name: str
@@ -45,6 +46,7 @@ async def parse_pull_request_webhook(request: Request) -> tuple[str, PullRequest
 
     return action, PullRequestEventContext(
         action=action,
+        installation_id=require_nested_int(payload, "installation", "id"),
         repository_full_name=require_nested_str(payload, "repository", "full_name"),
         repository_owner=require_nested_str(payload, "repository", "owner", "login"),
         repository_name=require_nested_str(payload, "repository", "name"),
