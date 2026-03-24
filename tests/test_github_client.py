@@ -1,7 +1,9 @@
+import json
+
 import httpx
 import pytest
 
-from pr_assistant.github_client import ChangedFile, GitHubAPIError, GitHubClient, PullRequest
+from pr_assistant.github_client import ChangedFile, GitHubAPIError, GitHubClient, IssueComment, PullRequest
 
 
 def test_fetch_pull_request_returns_core_metadata():
@@ -183,3 +185,33 @@ def test_github_api_errors_are_surfaced_cleanly():
 
     assert exc.value.status_code == 404
     assert exc.value.message == "Not Found"
+
+
+def test_post_issue_comment_returns_created_comment():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path == "/repos/acme/widgets/issues/42/comments"
+        assert request.headers["Authorization"] == "Bearer test-token"
+        assert json.loads(request.content.decode()) == {"body": "review body"}
+        return httpx.Response(
+            201,
+            json={
+                "id": 987654,
+                "body": "review body",
+                "html_url": "https://github.com/acme/widgets/pull/42#issuecomment-987654",
+            },
+        )
+
+    client = GitHubClient(token="test-token", transport=httpx.MockTransport(handler))
+
+    comment = client.post_issue_comment(
+        repository_full_name="acme/widgets",
+        issue_number=42,
+        body="review body",
+    )
+
+    assert comment == IssueComment(
+        id=987654,
+        body="review body",
+        html_url="https://github.com/acme/widgets/pull/42#issuecomment-987654",
+    )

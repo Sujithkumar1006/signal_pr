@@ -17,11 +17,15 @@ def test_groq_provider_builds_openai_compatible_request():
     )
     provider = GroqAIProvider(settings)
 
-    request = provider.build_chat_request(messages=[{"role": "user", "content": "Review this PR"}])
+    request = provider.build_chat_request(
+        messages=[{"role": "user", "content": "Review this PR"}],
+        response_format={"type": "json_object"},
+    )
 
     assert request.method == "POST"
     assert request.url == "https://api.groq.com/openai/v1/chat/completions"
     assert request.headers["Authorization"] == "Bearer secret-key"
     assert request.json["model"] == "openai/gpt-oss-120b"
     assert request.json["messages"] == [{"role": "user", "content": "Review this PR"}]
+    assert request.json["response_format"] == {"type": "json_object"}
     assert request.timeout_seconds == 12.5

@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 import httpx
@@ -5,6 +6,7 @@ import httpx
 
 DEFAULT_GITHUB_API_BASE_URL = "https://api.github.com"
 DEFAULT_GITHUB_API_VERSION = "2022-11-28"
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -36,6 +38,13 @@ class PullRequestData:
     pull_request: PullRequest
     changed_files: list[ChangedFile]
     diff_text: str
+
+
+@dataclass(frozen=True)
+class IssueComment:
+    id: int
+    body: str
+    html_url: str
 
 
 class GitHubAPIError(RuntimeError):
@@ -157,6 +166,30 @@ class GitHubClient:
             diff_text=diff_text,
         )
 
+    def post_issue_comment(
+        self,
+        *,
+        repository_full_name: str,
+        issue_number: int,
+        body: str,
+    ) -> IssueComment:
+        response = self._post_response(
+            f"/repos/{repository_full_name}/issues/{issue_number}/comments",
+            json={"body": body},
+        )
+        payload = self._decode_json(response)
+        if not isinstance(payload, dict):
+            raise GitHubAPIError(
+                status_code=response.status_code,
+                message="GitHub comment response was not a JSON object",
+            )
+
+        return IssueComment(
+            id=require_int(payload, "id"),
+            body=require_str(payload, "body"),
+            html_url=require_str(payload, "html_url"),
+        )
+
     def _get_json(self, path: str) -> dict:
         response = self._get_response(path)
         payload = self._decode_json(response)
@@ -182,6 +215,26 @@ class GitHubClient:
             return response
 
         message = response.text.strip() or "GitHub API request failed"
+        raise GitHubAPIError(status_code=response.status_code, message=message)
+
+    def _post_response(self, path: str, json: dict) -> httpx.Response:
+        logger.info("GitHub POST request path=%s", path)
+        response = self._client.post(path, json=json)
+        if response.is_success:
+            logger.info(
+                "GitHub POST response success status=%s path=%s",
+                response.status_code,
+                path,
+            )
+            return response
+
+        message = response.text.strip() or "GitHub API request failed"
+        logger.error(
+            "GitHub POST response failure status=%s path=%s body=%s",
+            response.status_code,
+            path,
+            message,
+        )
         raise GitHubAPIError(status_code=response.status_code, message=message)
 
 

@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 
 from pr_assistant.config import get_settings, validate_settings
 from pr_assistant.github_webhooks import parse_pull_request_webhook
-from pr_assistant.review_pipeline import fetch_pr_data_for_event, log_classification_examples
+from pr_assistant.review_pipeline import run_review_pipeline
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 
@@ -48,8 +48,7 @@ async def github_webhook(request: Request) -> dict:
             "reason": "unsupported pull_request action",
         }
 
-    pr_data = fetch_pr_data_for_event(event_context)
-    log_classification_examples(pr_data)
+    review_result = run_review_pipeline(event_context)
 
     return {
         "status": "accepted",
@@ -61,4 +60,8 @@ async def github_webhook(request: Request) -> dict:
         "pull_request_author": event_context.pull_request_author,
         "base_branch": event_context.base_branch,
         "head_branch": event_context.head_branch,
+        "risk_label": review_result.risk_assessment.label,
+        "risk_score": review_result.risk_assessment.score,
+        "comment_id": review_result.posted_comment.id,
+        "comment_url": review_result.posted_comment.html_url,
     }

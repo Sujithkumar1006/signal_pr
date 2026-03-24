@@ -13,11 +13,12 @@ Implemented:
 - Pull request webhook payload parsing for supported actions
 - Groq AI provider setup and live API validation
 - GitHub client for PR metadata, changed files, and diff fetching
+- GitHub App authentication with installation token exchange
+- Webhook-triggered PR data fetching in the runtime path
+- Rails-first file classification
+- Deterministic signal generation
 
 Not implemented yet:
-- Real GitHub token-based fetch wired into the webhook flow
-- Rails file classification
-- Signal generation
 - Risk scoring
 - AI review input builder
 - AI review generation from PR context
@@ -98,23 +99,20 @@ Targeted suites:
 PYTHONPATH=src .venv/bin/pytest tests/test_config.py
 PYTHONPATH=src .venv/bin/pytest tests/test_ai_providers.py
 PYTHONPATH=src .venv/bin/pytest tests/test_github_client.py
+PYTHONPATH=src .venv/bin/pytest tests/test_github_app.py
+PYTHONPATH=src .venv/bin/pytest tests/test_classifier.py
+PYTHONPATH=src .venv/bin/pytest tests/test_signals.py
 ```
 
 ## WIP
 
 Near-term work:
-- Wire GitHub authentication into runtime config
-- Connect webhook intake to the GitHub client
-- Add Rails-first file classification
-- Add deterministic signal generation
 - Add deterministic risk scoring
 - Build the AI review input payload
 - Generate AI review output from fetched PR context
 - Format and post a single GitHub PR comment
 
 Cleanup items:
-- Remove debug `print` statements from startup and webhook handling
-- Add a proper logger
 - Add integration tests for webhook-to-fetch flow
 - Add end-to-end tests with mocked GitHub and Groq responses
 

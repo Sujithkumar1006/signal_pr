@@ -16,7 +16,19 @@ class GroqAIProvider:
     def __init__(self, settings: Settings):
         self._settings = settings
 
-    def build_chat_request(self, *, messages: list[dict[str, str]]) -> AIRequest:
+    def build_chat_request(
+        self,
+        *,
+        messages: list[dict[str, str]],
+        response_format: dict | None = None,
+    ) -> AIRequest:
+        payload = {
+            "model": self._settings.ai_model,
+            "messages": messages,
+        }
+        if response_format is not None:
+            payload["response_format"] = response_format
+
         return AIRequest(
             method="POST",
             url=f"{self._settings.groq_base_url.rstrip('/')}/chat/completions",
@@ -24,10 +36,7 @@ class GroqAIProvider:
                 "Authorization": f"Bearer {self._settings.groq_api_key}",
                 "Content-Type": "application/json",
             },
-            json={
-                "model": self._settings.ai_model,
-                "messages": messages,
-            },
+            json=payload,
             timeout_seconds=self._settings.ai_timeout_seconds,
         )
 

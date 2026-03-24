@@ -26,9 +26,6 @@ class PullRequestEventContext:
 
 async def parse_pull_request_webhook(request: Request) -> tuple[str, PullRequestEventContext | None]:
     event_name = request.headers.get("X-GitHub-Event")
-    print(f'========================================')
-    print(f'Event name is #{event_name}')
-    print(f'========================================')
     if event_name != "pull_request":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
